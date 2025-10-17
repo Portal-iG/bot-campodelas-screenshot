@@ -1,35 +1,54 @@
 name: Monitoramento de Site
 
 on:
-  workflow_dispatch: # Permite iniciar manualmente
+  workflow_dispatch: # Permite iniciar manualmente pela interface do GitHub
   schedule:
-    # Roda a cada 90 minutos
+    # Agendamento: Roda a cada 90 minutos
+    # (O formato '*/90 * * * *' significa "aos minutos 0, 90, 180...")
     - cron: '*/90 * * * *'
 
 jobs:
   run-monitor:
+    # Usa a versão mais recente do Linux (Ubuntu)
     runs-on: ubuntu-latest
+
     steps:
+      # 1. Baixa o seu código (monitor_uma_vez.py e requirements.txt)
       - name: Checar o código
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
+      # 2. Configura o ambiente Python
       - name: Configurar Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.11' # Pode usar 3.10, 3.11, 3.12...
 
-      - name: Instalar dependências
+      # 3. Instala as bibliotecas do seu requirements.txt
+      - name: Instalar dependências Python
         run: |
           python -m pip install --upgrade pip
-          pip install selenium schedule slack_sdk
-
+          pip install -r requirements.txt
+          
+      # 4. Instala o Navegador Google Chrome
       - name: Instalar Google Chrome
         run: |
           sudo apt-get update
           sudo apt-get install -y google-chrome-stable
 
+      # 5. Instala o ChromeDriver (o "motor" do Selenium)
+      - name: Instalar ChromeDriver
+        run: |
+          CHROME_DRIVER_VERSION=$(curl -sS https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE)
+          wget -O chromedriver.zip "https://storage.googleapis.com/chrome-for-testing-public/$CHROME_DRIVER_VERSION/linux64/chromedriver-linux64.zip"
+          sudo unzip chromedriver.zip -d /usr/local/bin/
+          sudo chmod +x /usr/local/bin/chromedriver-linux64/chromedriver
+          # Cria um link simbólico para que o Selenium o encontre
+          sudo ln -s /usr/local/bin/chromedriver-linux64/chromedriver /usr/local/bin/chromedriver
+
+      # 6. Executa seu script
       - name: Executar o script de monitoramento
         env:
+          # Esta é a parte que "injeta" seus segredos no script
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
         run: python monitor_uma_vez.py
