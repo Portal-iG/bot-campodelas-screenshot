@@ -1,0 +1,2 @@
+selenium
+slack_sdk
