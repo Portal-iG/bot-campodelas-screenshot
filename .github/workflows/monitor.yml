@@ -3,9 +3,10 @@ name: Monitoramento de Site
 on:
   workflow_dispatch: # Permite iniciar manualmente pela interface do GitHub
   schedule:
-    # Agendamento: Roda a cada 90 minutos
-    # (O formato '*/90 * * * *' significa "aos minutos 0, 90, 180...")
-    - cron: '*/90 * * * *'
+    # Roda 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00 (UTC)
+    - cron: '0 0,3,6,9,12,15,18,21 * * *'
+    # Roda 01:30, 04:30, 07:30, 10:30, 13:30, 16:30, 19:30, 22:30 (UTC)
+    - cron: '30 1,4,7,10,13,16,19,22 * * *'
 
 jobs:
   run-monitor:
